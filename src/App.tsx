@@ -1,25 +1,51 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import "./index.css";
+// ============================================================
+// App.tsx
+// Description: Main application with React Router
+// ============================================================
 
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { DashboardPage } from './modules/dashboard';
+import { CandidatesPage } from './modules/candidates';
+import { ReviewsPage } from './modules/reviews';
+import { ChatPage } from './modules/chat';
+import './index.css';
+
+// ─────────────────────────────────────────────────────────────
+// ROUTE CONFIGURATION
+// ─────────────────────────────────────────────────────────────
+const ROUTES = [
+  { path: '/', element: <Navigate to="/dashboard" replace /> },
+  { path: '/dashboard', element: <DashboardPage />, title: 'Dashboard', description: 'Overview of your workforce and code quality metrics' },
+  { path: '/candidates', element: <CandidatesPage />, title: 'Talent Scanner', description: 'Parse CVs, extract skills, and rank candidates' },
+  { path: '/reviews', element: <ReviewsPage />, title: 'Code Review Analytics', description: 'Track developer performance and error trends' },
+  { path: '/chat', element: <ChatPage />, title: 'Smart Integrator', description: 'AI-powered assistant for cross-module insights' },
+];
+
+// ─────────────────────────────────────────────────────────────
+// MAIN APP COMPONENT
+// ─────────────────────────────────────────────────────────────
 export function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md text-center">
-        <CardHeader>
-          <CardTitle className="text-3xl">Hello! 👋</CardTitle>
-          <CardDescription className="text-base">
-            Welcome to Kozocom Flow
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-muted-foreground">
-            Edit <code className="bg-muted px-2 py-1 rounded font-mono text-sm">src/App.tsx</code> to get started
-          </p>
-          <Button>Get Started</Button>
-        </CardContent>
-      </Card>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {ROUTES.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              route.title ? (
+                <Layout pageTitle={route.title} pageDescription={route.description}>
+                  {route.element}
+                </Layout>
+              ) : (
+                route.element
+              )
+            }
+          />
+        ))}
+      </Routes>
+    </BrowserRouter>
   );
 }
 
