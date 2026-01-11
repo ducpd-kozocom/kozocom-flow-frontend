@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Repository, PRReview } from '@/lib/api';
+import type { Repository, PRReview } from '@/lib/reviewer-api';
 
 interface Props {
   repo: Repository;

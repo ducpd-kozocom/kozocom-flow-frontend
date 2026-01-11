@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import type { BreakingChange } from '@/lib/api';
+import type { BreakingChange } from '@/lib/reviewer-api';
 
 interface Props {
   change: BreakingChange;

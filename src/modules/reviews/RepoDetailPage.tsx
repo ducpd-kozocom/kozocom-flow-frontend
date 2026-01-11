@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { reviewsApi, repositoriesApi } from '@/lib/api';
-import type { Repository, PRReview } from '@/lib/api';
+import { reviewsApi, repositoriesApi } from '@/lib/reviewer-api';
+import type { Repository, PRReview } from '@/lib/reviewer-api';
 import { StatCard, PRCard, ConfigSheet } from './components';
 
 type FilterStatus = 'all' | 'issues' | 'clean';
