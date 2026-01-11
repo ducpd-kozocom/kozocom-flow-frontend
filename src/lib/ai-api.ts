@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const AI_URL = import.meta.env.VITE_AI_URL || 'http://localhost:9090/api/v1';
+const AI_URL = import.meta.env?.VITE_AI_URL ?? 'http://localhost:9090/api/v1';
 
 export const aiClient = axios.create({
   baseURL: AI_URL,

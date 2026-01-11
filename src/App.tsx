@@ -1,9 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import "./index.css";
-
-<<<<<<< Updated upstream
-=======
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { CandidatesPage } from './modules/candidates';
@@ -26,7 +20,6 @@ const ROUTES = [
 // ─────────────────────────────────────────────────────────────
 // MAIN APP COMPONENT
 // ─────────────────────────────────────────────────────────────
->>>>>>> Stashed changes
 export function App() {
   return (
     <BrowserRouter>
