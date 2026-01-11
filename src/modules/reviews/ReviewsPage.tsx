@@ -1,8 +1,8 @@
 import { memo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { reviewsApi, repositoriesApi } from '@/lib/api';
-import type { ReviewStats, Repository, PRReview } from '@/lib/api';
+import { reviewsApi, repositoriesApi } from '@/lib/reviewer-api';
+import type { ReviewStats, Repository, PRReview } from '@/lib/reviewer-api';
 import { StatCard, RepoCard } from './components';
 
 export const ReviewsPage = memo(function ReviewsPage() {
