@@ -7,7 +7,7 @@ import "./index.css";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { CandidatesPage } from './modules/candidates';
-import { ReviewsPage } from './modules/reviews';
+import { ReviewsPage, RepoDetailPage, ReviewDetailPage } from './modules/reviews';
 import { ChatPage } from './modules/chat';
 import './index.css';
 
@@ -17,7 +17,9 @@ import './index.css';
 const ROUTES = [
   { path: '/', element: <Navigate to="/candidates" replace /> },
   { path: '/candidates', element: <CandidatesPage />, title: 'Talent Scanner', description: 'Parse CVs, extract skills, and rank candidates' },
-  { path: '/reviews', element: <ReviewsPage />, title: 'Code Review Analytics', description: 'Track developer performance and error trends' },
+  { path: '/reviews', element: <ReviewsPage />, title: 'Code Reviews', description: 'Track repositories and review analytics' },
+  { path: '/reviews/repo/:id', element: <RepoDetailPage />, title: 'Repository Details', description: 'View repository reviews and configuration' },
+  { path: '/reviews/:id', element: <ReviewDetailPage />, title: 'Review Details', description: 'View breaking changes and affected files' },
   { path: '/chat', element: <ChatPage />, title: 'Smart Integrator', description: 'AI-powered assistant for cross-module insights' },
 ];
 

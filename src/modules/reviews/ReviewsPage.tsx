@@ -1,119 +1,107 @@
-// ============================================================
-// Reviews Module - Page Component
-// ============================================================
-
 import { memo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { reviewsApi } from '@/lib/api';
-import type { ReviewStats, CodeReview } from '@/lib/api';
+import { reviewsApi, repositoriesApi } from '@/lib/api';
+import type { ReviewStats, Repository, PRReview } from '@/lib/api';
+import { StatCard, RepoCard } from './components';
 
-// ─────────────────────────────────────────────────────────────
-// REVIEWS PAGE
-// ─────────────────────────────────────────────────────────────
 export const ReviewsPage = memo(function ReviewsPage() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<ReviewStats | null>(null);
-  const [reviews, setReviews] = useState<CodeReview[]>([]);
+  const [repos, setRepos] = useState<Repository[]>([]);
+  const [reviews, setReviews] = useState<PRReview[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [statsData, reviewsData] = await Promise.all([
-          reviewsApi.getStats('month'),
-          reviewsApi.getAll({ period: 'month' })
-        ]);
-        setStats(statsData);
-        setReviews(reviewsData.slice(0, 10));
-      } catch (error) {
-        console.error('Failed to fetch review data:', error);
-        setStats({
-          totalReviews: 0,
-          totalErrors: 0,
-          avgErrorsPerReview: 0,
-          securityIssues: 0,
-          developerStats: [],
-          errorTypes: { syntax: 0, logic: 0, security: 0 },
-          weeklyTrend: []
-        });
-        setReviews([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
+    Promise.all([
+      reviewsApi.getStats('month').catch(() => null),
+      repositoriesApi.getAll().catch(() => []),
+      reviewsApi.getAll({ period: 'month' }).catch(() => []),
+    ]).then(([s, r, rev]) => {
+      setStats(s);
+      setRepos(r);
+      setReviews(rev);
+    }).finally(() => setLoading(false));
   }, []);
 
-  const totalErrorsByType = stats ? 
-    (stats.errorTypes.syntax + stats.errorTypes.logic + stats.errorTypes.security) : 0;
-
-  const pieData = stats ? [
-    { label: 'Syntax', value: stats.errorTypes.syntax, color: '#6366f1', offset: 0 },
-    { label: 'Logic', value: stats.errorTypes.logic, color: '#8b5cf6', offset: stats.errorTypes.syntax },
-    { label: 'Security', value: stats.errorTypes.security, color: '#ec4899', offset: stats.errorTypes.syntax + stats.errorTypes.logic },
-  ] : [];
-
-  if (loading) {
-    return (
-      <div className="code-reviews-page" style={{ textAlign: 'center', padding: '40px' }}>
-        Loading analytics...
+  if (loading) return (
+    <div className="reviews-page">
+      <div className="review-stats-row">
+        {[1,2,3,4].map(i => <div key={i} className="stat-card skeleton-card"><div className="skeleton-content" /></div>)}
       </div>
-    );
-  }
+      <div className="reviews-grid">
+        <div className="repos-card skeleton-card"><div className="skeleton-content" /></div>
+        <div className="reviews-sidebar">
+          <div className="chart-card skeleton-card"><div className="skeleton-content" /></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const repoReviews = (repoId: number) => reviews.filter(r => r.repository_id === repoId);
 
   return (
-    <div className="code-reviews-page">
+    <div className="reviews-page">
       <div className="review-stats-row">
-        <Card className="review-stat-card">
-          <CardContent className="review-stat-content">
-            <span className="review-stat-icon">📝</span>
-            <div className="review-stat-info">
-              <span className="review-stat-value">{stats?.totalReviews || 0}</span>
-              <span className="review-stat-label">Total Reviews</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="review-stat-card">
-          <CardContent className="review-stat-content">
-            <span className="review-stat-icon">🐛</span>
-            <div className="review-stat-info">
-              <span className="review-stat-value">{stats?.totalErrors || 0}</span>
-              <span className="review-stat-label">Total Errors</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="review-stat-card">
-          <CardContent className="review-stat-content">
-            <span className="review-stat-icon">📊</span>
-            <div className="review-stat-info">
-              <span className="review-stat-value">{stats?.avgErrorsPerReview || 0}</span>
-              <span className="review-stat-label">Avg Errors/Review</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="review-stat-card">
-          <CardContent className="review-stat-content">
-            <span className="review-stat-icon">🔐</span>
-            <div className="review-stat-info">
-              <span className="review-stat-value">{stats?.securityIssues || 0}</span>
-              <span className="review-stat-label">Security Issues</span>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard icon="📝" value={stats?.totalReviews ?? 0} label="Reviews" />
+        <StatCard icon="🐛" value={stats?.totalErrors ?? 0} label="Issues" />
+        <StatCard icon="📊" value={stats?.avgErrorsPerReview ?? 0} label="Avg/Review" />
+        <StatCard icon="🔐" value={stats?.securityIssues ?? 0} label="Critical" />
       </div>
 
-      <div className="charts-grid">
-        <Card className="chart-card-large">
+      <div className="reviews-grid">
+        <Card className="repos-card">
           <CardHeader>
-            <CardTitle className="chart-title">
-              <span>📊</span> Top Errors by Developer
-            </CardTitle>
+            <CardTitle className="chart-title">📦 Connected Repositories</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="bar-chart">
-              {stats?.developerStats && stats.developerStats.length > 0 ? (
-                stats.developerStats.map((dev) => {
-                  const maxErrors = Math.max(...stats.developerStats.map(d => d.errors));
-                  const width = maxErrors > 0 ? (dev.errors / maxErrors) * 100 : 0;
+          <CardContent className="repos-list">
+            {repos.length > 0 ? repos.map(repo => (
+              <RepoCard
+                key={repo.id}
+                repo={repo}
+                reviews={repoReviews(repo.id)}
+                hasConfig={false}
+                onClick={() => navigate(`/reviews/repo/${repo.id}`)}
+              />
+            )) : (
+              <p className="empty-state">No repositories connected yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="reviews-sidebar">
+          <Card className="chart-card">
+            <CardHeader>
+              <CardTitle className="chart-title">📈 Weekly Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="line-chart">
+                <div className="line-chart-area">
+                  {stats?.weeklyTrend?.length ? stats.weeklyTrend.map(w => {
+                    const max = Math.max(...stats.weeklyTrend.map(x => x.errors));
+                    const height = max > 0 ? (w.errors / max) * 100 : 0;
+                    return (
+                      <div key={w.week} className="line-point-container">
+                        <div className="line-bar" style={{ height: `${height}%` }} />
+                        <span className="point-value">{w.errors}</span>
+                        <span className="line-label">{w.week}</span>
+                      </div>
+                    );
+                  }) : <p className="empty-state">No data</p>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="chart-card">
+            <CardHeader>
+              <CardTitle className="chart-title">👥 Top Contributors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bar-chart">
+                {stats?.developerStats?.length ? stats.developerStats.slice(0, 5).map(dev => {
+                  const max = Math.max(...stats.developerStats.map(d => d.errors));
+                  const width = max > 0 ? (dev.errors / max) * 100 : 0;
                   return (
                     <div key={dev.name} className="bar-row">
                       <span className="bar-label">{dev.name}</span>
@@ -123,153 +111,45 @@ export const ReviewsPage = memo(function ReviewsPage() {
                       <span className="bar-value">{dev.errors}</span>
                     </div>
                   );
-                })
-              ) : (
-                <p style={{ color: 'var(--kz-text-muted)', textAlign: 'center' }}>
-                  No review data available.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="chart-card">
-          <CardHeader>
-            <CardTitle className="chart-title">
-              <span>🎯</span> Error Type Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="pie-chart-container">
-              <div className="pie-chart">
-                <svg className="pie-svg" viewBox="0 0 100 100">
-                  {totalErrorsByType > 0 ? (
-                    pieData.map((segment) => {
-                      const percentage = segment.value / totalErrorsByType;
-                      const strokeDasharray = `${percentage * 314} 314`;
-                      const strokeDashoffset = -((segment.offset / totalErrorsByType) * 314);
-                      return (
-                        <circle
-                          key={segment.label}
-                          cx="50" cy="50" r="50"
-                          fill="transparent"
-                          stroke={segment.color}
-                          strokeWidth="100"
-                          strokeDasharray={strokeDasharray}
-                          strokeDashoffset={strokeDashoffset}
-                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                        />
-                      );
-                    })
-                  ) : (
-                    <circle cx="50" cy="50" r="50" fill="var(--kz-bg-main)" />
-                  )}
-                </svg>
-                <div className="pie-center">
-                  <span className="pie-total">{totalErrorsByType}</span>
-                  <span className="pie-label">Total</span>
-                </div>
+                }) : <p className="empty-state">No data</p>}
               </div>
-              <div className="pie-legend">
-                {pieData.map((item) => (
-                  <div key={item.label} className="legend-item">
-                    <span className="legend-color" style={{ background: item.color }} />
-                    <span className="legend-label">{item.label}</span>
-                    <span className="legend-value">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="chart-card">
-          <CardHeader>
-            <CardTitle className="chart-title">
-              <span>📈</span> Weekly Bug Count
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="line-chart">
-              <div className="line-chart-area">
-                {stats?.weeklyTrend && stats.weeklyTrend.length > 0 ? (
-                  stats.weeklyTrend.map((week) => {
-                    const maxErrors = Math.max(...stats.weeklyTrend.map(w => w.errors));
-                    const height = maxErrors > 0 ? (week.errors / maxErrors) * 100 : 0;
-                    return (
-                      <div key={week.week} className="line-point-container">
-                        <div className="line-bar" style={{ height: `${height}%` }} />
-                        <span className="point-value">{week.errors}</span>
-                        <span className="line-label">{week.week}</span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p style={{ color: 'var(--kz-text-muted)', textAlign: 'center', width: '100%' }}>
-                    No weekly data available
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <Card className="reviews-table-card mt-4">
+      <Card className="recent-reviews-card">
         <CardHeader>
-          <CardTitle className="chart-title">
-            <span>📋</span> Recent Reviews
-          </CardTitle>
+          <CardTitle className="chart-title">📋 Recent Reviews</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="table-container">
             <table className="reviews-table">
               <thead>
                 <tr>
-                  <th>Developer</th>
-                  <th>PR Link</th>
+                  <th>Repo</th>
+                  <th>PR</th>
+                  <th>Author</th>
+                  <th>Issues</th>
                   <th>Date</th>
-                  <th>Syntax</th>
-                  <th>Logic</th>
-                  <th>Security</th>
-                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>
-                {reviews.length > 0 ? (
-                  reviews.map((review) => {
-                    const errorTypes = typeof review.error_types === 'string' 
-                      ? JSON.parse(review.error_types) 
-                      : review.error_types;
-                    return (
-                      <tr key={review.id}>
-                        <td>
-                          <div className="developer-cell">
-                            <div className="developer-avatar-small">
-                              {review.developer_name?.slice(0, 2).toUpperCase() || '??'}
-                            </div>
-                            <span>{review.developer_name || 'Unknown'}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <a href={review.pr_link} className="pr-link" target="_blank" rel="noopener noreferrer">
-                            {review.pr_link || 'N/A'}
-                          </a>
-                        </td>
-                        <td>{review.review_date ? new Date(review.review_date).toLocaleDateString() : 'N/A'}</td>
-                        <td><span className="error-badge syntax">{errorTypes?.syntax || 0}</span></td>
-                        <td><span className="error-badge logic">{errorTypes?.logic || 0}</span></td>
-                        <td><span className="error-badge security">{errorTypes?.security || 0}</span></td>
-                        <td><span className="error-badge total">{review.total_errors || 0}</span></td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', color: 'var(--kz-text-muted)', padding: '24px' }}>
-                      No reviews found.
+                {reviews.slice(0, 10).map(r => (
+                  <tr key={r.id} onClick={() => navigate(`/reviews/${r.id}`)} className="clickable">
+                    <td>{repos.find(repo => repo.id === r.repository_id)?.name || 'Unknown'}</td>
+                    <td><span className="pr-link">#{r.pr_number} {r.pr_title?.slice(0, 30)}</span></td>
+                    <td>{r.pr_author || 'Unknown'}</td>
+                    <td>
+                      {r.count_critical > 0 && <span className="error-badge security">{r.count_critical}</span>}
+                      {r.count_warning > 0 && <span className="error-badge logic">{r.count_warning}</span>}
+                      {r.count_critical === 0 && r.count_warning === 0 && <span className="error-badge syntax">✓</span>}
                     </td>
+                    <td>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
                   </tr>
+                ))}
+                {reviews.length === 0 && (
+                  <tr><td colSpan={5} className="empty-state">No reviews yet</td></tr>
                 )}
               </tbody>
             </table>
