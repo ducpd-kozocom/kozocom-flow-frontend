@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const REVIEWER_URL = import.meta.env?.VITE_REVIEWER_URL ?? 'http://localhost:9000/api/v1';
+const REVIEWER_URL = import.meta.env?.VITE_REVIEWER_URL ?? 'http://localhost:8000/api/v1';
 
 export const reviewerClient = axios.create({
   baseURL: REVIEWER_URL,
