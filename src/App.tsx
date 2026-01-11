@@ -1,11 +1,11 @@
-// ============================================================
-// App.tsx
-// Description: Main application with React Router
-// ============================================================
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import "./index.css";
 
+<<<<<<< Updated upstream
+=======
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { DashboardPage } from './modules/dashboard';
 import { CandidatesPage } from './modules/candidates';
 import { ReviewsPage, RepoDetailPage, ReviewDetailPage } from './modules/reviews';
 import { ChatPage } from './modules/chat';
@@ -15,8 +15,7 @@ import './index.css';
 // ROUTE CONFIGURATION
 // ─────────────────────────────────────────────────────────────
 const ROUTES = [
-  { path: '/', element: <Navigate to="/dashboard" replace /> },
-  { path: '/dashboard', element: <DashboardPage />, title: 'Dashboard', description: 'Overview of your workforce and code quality metrics' },
+  { path: '/', element: <Navigate to="/candidates" replace /> },
   { path: '/candidates', element: <CandidatesPage />, title: 'Talent Scanner', description: 'Parse CVs, extract skills, and rank candidates' },
   { path: '/reviews', element: <ReviewsPage />, title: 'Code Reviews', description: 'Track repositories and review analytics' },
   { path: '/reviews/repo/:id', element: <RepoDetailPage />, title: 'Repository Details', description: 'View repository reviews and configuration' },
@@ -27,6 +26,7 @@ const ROUTES = [
 // ─────────────────────────────────────────────────────────────
 // MAIN APP COMPONENT
 // ─────────────────────────────────────────────────────────────
+>>>>>>> Stashed changes
 export function App() {
   return (
     <BrowserRouter>

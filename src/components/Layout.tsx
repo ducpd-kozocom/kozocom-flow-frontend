@@ -27,7 +27,7 @@ export const Layout = memo(function Layout({
   const location = useLocation();
   
   // Get active item from current path
-  const activeItem = location.pathname.replace('/', '') || 'dashboard';
+  const activeItem = location.pathname.replace('/', '') || 'candidates';
 
   return (
     <div className="app-layout">

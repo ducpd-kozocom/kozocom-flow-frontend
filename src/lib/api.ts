@@ -8,6 +8,7 @@ const getApiBaseUrl = () => {
   try {
     // Try Vite environment variable first
     if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) {
+      console.log(import.meta.env.VITE_API_BASE_URL);
       return import.meta.env.VITE_API_BASE_URL;
     }
   } catch {
@@ -22,14 +23,80 @@ const API_BASE_URL = getApiBaseUrl();
 // ─────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────
+export interface SkillDetail {
+  id: number;
+  category: string;
+  name: string;
+  proficiency: string | null;
+}
+
+export interface Experience {
+  id: number;
+  company: string | null;
+  role: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  duration_months: number | null;
+  technologies: string[];
+  achievements: string[];
+}
+
+export interface Education {
+  id: number;
+  degree: string | null;
+  field: string | null;
+  institution: string | null;
+  graduation_year: number | null;
+}
+
+export interface Project {
+  id: number;
+  name: string | null;
+  description: string | null;
+  technologies: string[];
+  role: string | null;
+  outcome: string | null;
+}
+
+export interface Certification {
+  id: number;
+  name: string;
+  issuer: string | null;
+  year: number | null;
+}
+
+export interface RedFlag {
+  id: number;
+  type: string;
+  severity: string;
+  evidence: string | null;
+}
+
 export interface Candidate {
   id: number;
   name: string;
-  email: string;
-  current_role: string;
-  years_experience: number;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  current_role: string | null;
+  years_experience: number | null;
+  seniority_level: string | null;
+  summary: string | null;
+  social_links: { linkedin?: string; github?: string; portfolio?: string; other?: string[] } | null;
+  spoken_languages: string[] | null;
+  availability: string | null;
+  risk_summary: string | null;
   skills: string[];
-  match_score: number;
+  skill_details?: SkillDetail[];
+  experiences?: Experience[];
+  education?: Education[];
+  projects?: Project[];
+  certifications?: Certification[];
+  red_flags?: RedFlag[];
+  match_score: number | null;
+  hr_score: number | null;
+  hr_score_breakdown: Record<string, unknown> | null;
+  vector_id: string | null;
   created_at: string;
 }
 
@@ -175,6 +242,316 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return data as T;
 }
 
+// AI Service Base URL (separate from main backend)
+const AI_BASE_URL = 'http://localhost:9090/api/v1';
+
+// ─────────────────────────────────────────────────────────────
+// CV API (AI Service)
+// ─────────────────────────────────────────────────────────────
+export interface UploadResult {
+  filename: string;
+  success: boolean;
+  candidate_id: number | null;
+  error: string | null;
+}
+
+export interface UploadResponse {
+  uploaded: number;
+  failed: number;
+  results: UploadResult[];
+}
+
+export interface AskResult {
+  id: number;
+  name: string;
+  score: number;
+  current_role: string | null;
+  skills: string[];
+  summary: string | null;
+}
+
+export interface AskResponse {
+  question: string;
+  candidates: AskResult[];
+  total: number;
+}
+
+// Job Description types
+export interface JobDescription {
+  id: number;
+  title: string;
+  description?: string;
+  department?: string;
+  required_skills: string[];
+  nice_to_have_skills: string[];
+  min_years_experience?: number;
+  max_years_experience?: number;
+  location?: string;
+  remote_allowed: boolean;
+  is_active: boolean;
+  created_at?: string;
+}
+
+// Filter/Score types
+export interface ScoreBreakdown {
+  skill_match_score: number;
+  experience_score: number;
+  role_similarity_score: number;
+  stability_score: number;
+  red_flag_penalty: number;
+  final_score: number;
+  matched_required_skills: string[];
+  matched_nice_to_have_skills: string[];
+  missing_required_skills: string[];
+  red_flags: { type: string; description: string; penalty: number }[];
+}
+
+export interface FilteredCandidate {
+  id: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  current_role?: string;
+  years_experience?: number;
+  seniority_level?: string;
+  summary?: string;
+  social_links?: { linkedin?: string; github?: string; portfolio?: string; other?: string[] };
+  availability?: string;
+  skills: string[];
+  skill_details?: SkillDetail[];
+  experiences?: Experience[];
+  education?: Education[];
+  projects?: Project[];
+  certifications?: Certification[];
+  red_flags?: RedFlag[];
+  final_score: number;
+  recommendation: string;
+  score_breakdown: ScoreBreakdown;
+  explanation?: {
+    candidate_name: string;
+    job_title: string;
+    recommendation: string;
+    summary: string;
+    strengths: string[];
+    concerns: string[];
+  };
+}
+
+export interface FilterResponse {
+  job_title: string;
+  total_candidates: number;
+  filtered_count: number;
+  min_score_applied: number;
+  candidates: FilteredCandidate[];
+}
+
+export const cvApi = {
+  /**
+   * Upload multiple CV PDF files
+   */
+  upload: async (files: File[]): Promise<UploadResponse> => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    
+    const response = await fetch(`${AI_BASE_URL}/cv/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  
+  /**
+   * Ask AI questions about candidates (semantic search)
+   */
+  ask: async (question: string, topK: number = 5): Promise<AskResponse> => {
+    const response = await fetch(`${AI_BASE_URL}/cv/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, top_k: topK }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Ask failed: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  
+  /**
+   * Get all candidates with pagination
+   */
+  getCandidates: async (skip = 0, limit = 20): Promise<{ candidates: Candidate[]; total: number }> => {
+    const response = await fetch(`${AI_BASE_URL}/cv/candidates?skip=${skip}&limit=${limit}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get candidates: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Get single candidate by ID with full details
+   */
+  getById: async (candidateId: number): Promise<Candidate> => {
+    const response = await fetch(`${AI_BASE_URL}/cv/candidates/${candidateId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get candidate: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Filter and score candidates against a job description
+   */
+  filter: async (jobId: number, minScore = 0, topK = 50): Promise<FilterResponse> => {
+    const response = await fetch(`${AI_BASE_URL}/cv/filter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        job_id: jobId, 
+        min_score: minScore, 
+        top_k: topK,
+        include_explanations: true 
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Filter failed: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  /**
+   * Export filtered candidates as CSV
+   */
+  exportCsv: async (jobId: number, minScore = 0): Promise<Blob> => {
+    const response = await fetch(
+      `${AI_BASE_URL}/cv/filter/csv?job_id=${jobId}&min_score=${minScore}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.status}`);
+    }
+    
+    return response.blob();
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// JOBS API
+// ─────────────────────────────────────────────────────────────
+export const jobsApi = {
+  /**
+   * Get all jobs
+   */
+  getAll: async (activeOnly = true): Promise<JobDescription[]> => {
+    const response = await fetch(`${AI_BASE_URL}/jobs?active_only=${activeOnly}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get jobs: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Get job by ID
+   */
+  getById: async (id: number): Promise<JobDescription> => {
+    const response = await fetch(`${AI_BASE_URL}/jobs/${id}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get job: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new job
+   */
+  create: async (job: Omit<JobDescription, 'id' | 'created_at' | 'is_active'>): Promise<JobDescription> => {
+    const response = await fetch(`${AI_BASE_URL}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(job),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create job: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  /**
+   * Update job
+   */
+  update: async (id: number, job: Partial<JobDescription>): Promise<JobDescription> => {
+    const response = await fetch(`${AI_BASE_URL}/jobs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(job),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update job: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  /**
+   * Delete job
+   */
+  delete: async (id: number): Promise<void> => {
+    const response = await fetch(`${AI_BASE_URL}/jobs/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to delete job: ${response.status}`);
+    }
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SMART CHAT API (with MCP/DB access)
+// ─────────────────────────────────────────────────────────────
+export interface SmartChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  data?: unknown; // Optional structured data (tables, charts)
+  timestamp: string;
+}
+
+export interface SmartChatResponse {
+  message: string;
+  data?: unknown;
+  sources?: string[];
+}
+
+export const smartChatApi = {
+  /**
+   * Send message to smart assistant
+   */
+  query: async (message: string, conversationId?: string): Promise<SmartChatResponse> => {
+    const response = await fetch(`${AI_BASE_URL}/chat/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, conversation_id: conversationId }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Chat failed: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+};
+
 // ─────────────────────────────────────────────────────────────
 // CANDIDATES API
 // ─────────────────────────────────────────────────────────────
@@ -282,4 +659,8 @@ export default {
   repositories: repositoriesApi,
   chat: chatApi,
   dashboard: dashboardApi,
+  cv: cvApi,
+  jobs: jobsApi,
+  smartChat: smartChatApi,
 };
+

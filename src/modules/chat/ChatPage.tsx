@@ -1,38 +1,48 @@
 // ============================================================
-// Chat Module - Page Component
+// Chat Module - Enhanced Smart Chat Page
 // ============================================================
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { chatApi } from '@/lib/api';
-import type { ChatMessage } from '@/lib/api';
+import { smartChatApi } from '@/lib/api';
+import type { SmartChatMessage } from '@/lib/api';
 
 // ─────────────────────────────────────────────────────────────
 // SUGGESTED PROMPTS
 // ─────────────────────────────────────────────────────────────
 const SUGGESTED_PROMPTS = [
-  'Who is the developer with most security errors?',
-  'Find candidates with React experience',
-  'What are the top error types this week?',
-  'Show me the best matching candidates',
+  'How many candidates do we have?',
+  'Find candidates with Python experience',
+  'What are the top skills in our database?',
+  'Show me the average years of experience',
+  'List all job descriptions',
 ];
+
+// ─────────────────────────────────────────────────────────────
+// MESSAGE TYPE
+// ─────────────────────────────────────────────────────────────
+interface Message extends SmartChatMessage {
+  sources?: string[];
+}
 
 // ─────────────────────────────────────────────────────────────
 // CHAT PAGE
 // ─────────────────────────────────────────────────────────────
 export const ChatPage = memo(function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<Message[]>([
     { 
       role: 'assistant', 
-      content: "👋 **Hello! I'm the Smart Integrator.**\n\nI can help you with:\n• Finding candidates by skills\n• Analyzing code review trends\n• Identifying top error types\n\nAsk me anything about your workforce or code quality data!" 
+      content: "👋 **Hello! I'm your Smart HR Assistant.**\n\nI can query your candidate database and help you with:\n• Counting and finding candidates\n• Analyzing skills and experience\n• Semantic search over CVs\n• Job description information\n\nTry asking me something like *\"How many candidates do we have?\"* or *\"Find candidates with Python\"*!",
+      timestamp: new Date().toISOString()
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [activeSources, setActiveSources] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sessionId = useRef(`session_${Date.now()}`);
+  const conversationId = useRef(`conv_${Date.now()}`);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,24 +52,36 @@ export const ChatPage = memo(function ChatPage() {
     const trimmedInput = input.trim();
     if (!trimmedInput || isTyping) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: trimmedInput };
+    const userMessage: Message = { 
+      role: 'user', 
+      content: trimmedInput,
+      timestamp: new Date().toISOString()
+    };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    setActiveSources([]);
 
     try {
-      const response = await chatApi.query(trimmedInput, sessionId.current);
-      const assistantMessage: ChatMessage = { 
+      const response = await smartChatApi.query(trimmedInput, conversationId.current);
+      
+      const assistantMessage: Message = { 
         role: 'assistant', 
         content: response.message,
-        timestamp: response.timestamp
+        timestamp: new Date().toISOString(),
+        sources: response.sources
       };
       setMessages(prev => [...prev, assistantMessage]);
+      
+      if (response.sources) {
+        setActiveSources(response.sources);
+      }
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "❌ Sorry, I couldn't process your request. Please check that the backend server is running."
+        content: "❌ Sorry, I couldn't process your request. Please check that the AI backend server is running at http://localhost:9090.",
+        timestamp: new Date().toISOString()
       }]);
     } finally {
       setIsTyping(false);
@@ -75,6 +97,16 @@ export const ChatPage = memo(function ChatPage() {
 
   const handlePromptClick = useCallback((prompt: string) => {
     setInput(prompt);
+  }, []);
+
+  const handleClearChat = useCallback(() => {
+    setMessages([{
+      role: 'assistant',
+      content: "💬 Chat cleared. How can I help you?",
+      timestamp: new Date().toISOString()
+    }]);
+    conversationId.current = `conv_${Date.now()}`;
+    setActiveSources([]);
   }, []);
 
   return (
@@ -93,9 +125,34 @@ export const ChatPage = memo(function ChatPage() {
                     dangerouslySetInnerHTML={{ 
                       __html: message.content
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
                         .replace(/\n/g, '<br/>')
                     }}
                   />
+                  {message.sources && message.sources.length > 0 && (
+                    <div style={{ 
+                      marginTop: '8px', 
+                      display: 'flex', 
+                      gap: '6px', 
+                      flexWrap: 'wrap' 
+                    }}>
+                      {message.sources.map((source, i) => (
+                        <span 
+                          key={i}
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '2px 8px',
+                            background: 'var(--kz-accent-primary)',
+                            color: 'white',
+                            borderRadius: '12px',
+                            opacity: 0.8
+                          }}
+                        >
+                          📊 {source}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {message.timestamp && (
                     <span className="bubble-time">
                       {new Date(message.timestamp).toLocaleTimeString()}
@@ -140,7 +197,7 @@ export const ChatPage = memo(function ChatPage() {
 
           <div className="chat-input-row">
             <Textarea
-              placeholder="Ask me about candidates, code reviews, or analytics..."
+              placeholder="Ask me about candidates, skills, experience, or job openings..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -161,14 +218,15 @@ export const ChatPage = memo(function ChatPage() {
       <div className="chat-sidebar">
         <Card>
           <CardHeader>
-            <CardTitle style={{ fontSize: '14px' }}>💡 Tips</CardTitle>
+            <CardTitle style={{ fontSize: '14px' }}>💡 Example Questions</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="tips-list">
-              <li>Ask about specific developers</li>
-              <li>Query candidate skills</li>
-              <li>Analyze error trends</li>
-              <li>Get recommendations</li>
+              <li>How many candidates do we have?</li>
+              <li>Find candidates with React skills</li>
+              <li>What's the average experience?</li>
+              <li>Show me the top 10 skills</li>
+              <li>List all job descriptions</li>
             </ul>
           </CardContent>
         </Card>
@@ -180,18 +238,31 @@ export const ChatPage = memo(function ChatPage() {
           <CardContent>
             <div className="data-sources">
               <div className="source-item">
-                <span className="source-status active" />
-                <span>Candidates Database</span>
+                <span className={`source-status ${activeSources.includes('Candidate Database') ? 'active' : ''}`} />
+                <span>Candidate Database</span>
               </div>
               <div className="source-item">
-                <span className="source-status active" />
-                <span>Code Reviews</span>
+                <span className={`source-status ${activeSources.includes('Vector Database') ? 'active' : ''}`} />
+                <span>Vector Database</span>
+              </div>
+              <div className="source-item">
+                <span className={`source-status ${activeSources.includes('Job Database') ? 'active' : ''}`} />
+                <span>Job Database</span>
               </div>
               <div className="source-item">
                 <span className="source-status active" />
                 <span>Ollama LLM</span>
               </div>
             </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClearChat}
+              style={{ width: '100%', marginTop: '12px' }}
+            >
+              🗑️ Clear Chat
+            </Button>
           </CardContent>
         </Card>
       </div>

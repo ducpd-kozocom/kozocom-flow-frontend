@@ -10,7 +10,6 @@ import { Link, useLocation } from 'react-router-dom';
 // NAVIGATION ITEMS
 // ─────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'candidates', path: '/candidates', label: 'Talent Scanner', icon: '👥' },
   { id: 'reviews', path: '/reviews', label: 'Code Reviews', icon: '💻' },
   { id: 'chat', path: '/chat', label: 'Smart Integrator', icon: '🧠' },
@@ -44,7 +43,7 @@ export const Sidebar = memo(function Sidebar({ activeItem }: SidebarProps) {
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path || 
-            (item.path === '/dashboard' && location.pathname === '/');
+            (item.path === '/candidates' && location.pathname === '/');
           
           return (
             <Link
