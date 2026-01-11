@@ -2742,3 +2742,182 @@
   line-height: 1.5;
   margin: 0;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   CONFIG SHEET - IMPROVED STYLES
+   ───────────────────────────────────────────────────────────── */
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--kz-border-light);
+}
+
+.config-row:last-child {
+  border-bottom: none;
+}
+
+.config-row.disabled {
+  opacity: 0.6;
+}
+
+.config-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  padding-right: 16px;
+}
+
+.config-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--kz-text-primary);
+}
+
+.config-desc {
+  font-size: 12px;
+  color: var(--kz-text-muted);
+}
+
+.config-field {
+  margin-bottom: 16px;
+}
+
+.config-field:last-child {
+  margin-bottom: 0;
+}
+
+.config-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--kz-text-secondary);
+}
+
+.config-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--kz-text-muted);
+}
+
+.config-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.config-select-row {
+  display: flex;
+  gap: 8px;
+}
+
+.config-select-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--kz-border);
+  border-radius: 8px;
+  background: var(--kz-bg-main);
+  font-size: 13px;
+  color: var(--kz-text-secondary);
+  cursor: pointer;
+  transition: all var(--kz-transition-fast);
+  text-align: center;
+}
+
+.config-select-btn:hover {
+  border-color: var(--kz-primary);
+  color: var(--kz-primary);
+}
+
+.config-select-btn.active {
+  background: var(--kz-gradient-primary);
+  border-color: transparent;
+  color: white;
+  font-weight: 500;
+}
+
+.config-agents-note {
+  font-size: 11px;
+  color: var(--kz-text-muted);
+  font-style: italic;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+/* Switch component override for better visibility */
+.config-row [data-state="checked"] {
+  background: var(--kz-primary) !important;
+}
+
+.config-row [data-state="unchecked"] {
+  background: var(--kz-border) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SWITCH COMPONENT
+   ───────────────────────────────────────────────────────────── */
+.switch-root {
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 12px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.switch-root:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.switch-root[data-state="checked"] {
+  background: var(--kz-primary);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.switch-thumb[data-state="checked"] {
+  transform: translateX(20px);
+}
+
+/* Config textarea */
+.config-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--kz-border);
+  border-radius: 8px;
+  background: var(--kz-bg-main);
+  font-size: 13px;
+  font-family: 'SF Mono', Monaco, monospace;
+  color: var(--kz-text-primary);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.config-textarea:focus {
+  outline: none;
+  border-color: var(--kz-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.config-textarea::placeholder {
+  color: var(--kz-text-muted);
+}

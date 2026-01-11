@@ -124,8 +124,8 @@ export const repositoriesApi = {
   getAll: () => reviewerClient.get<Repository[]>('/repositories').then(r => r.data),
   getById: (id: number) => reviewerClient.get<Repository>(`/repositories/${id}`).then(r => r.data),
   getConfig: (id: number) => reviewerClient.get<RepoConfig>(`/repositories/${id}/config`).then(r => r.data),
-  saveConfig: (id: number, config: Partial<RepoConfig>) => 
-    reviewerClient.post<RepoConfig>(`/repositories/${id}/config`, config).then(r => r.data),
+  updateConfig: (id: number, config: Partial<RepoConfig>) => 
+    reviewerClient.put<RepoConfig>(`/repositories/${id}/config`, config).then(r => r.data),
 };
 
 // ─────────────────────────────────────────────────────────────
