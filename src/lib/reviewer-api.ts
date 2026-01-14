@@ -39,6 +39,7 @@ export interface RepoConfig {
   github_comment: boolean;
   output_language: string;
   agents: Record<string, boolean>;
+  commands: Record<string, boolean>;
 }
 
 export interface AffectedCaller {

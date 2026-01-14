@@ -199,6 +199,22 @@ export const ConfigSheet = memo(function ConfigSheet({ repo, open, onClose, onSa
               </div>
               <p className="config-agents-note">Core agents cannot be disabled</p>
             </div>
+
+            {/* Chat Commands */}
+            <div className="config-section">
+              <h3>Chat Commands</h3>
+              <div className="config-row">
+                <div className="config-row-info">
+                  <span className="config-label">🔧 @reviewer fix</span>
+                  <span className="config-desc">Generate code fixes for breaking changes</span>
+                </div>
+                <Switch
+                  checked={config.commands?.fix ?? true}
+                  onCheckedChange={v => update('commands', { ...config.commands, fix: v })}
+                />
+              </div>
+              <p className="config-hint">Reply "@reviewer fix" to a breaking change comment to generate fixes for all affected files.</p>
+            </div>
           </div>
         )}
 
