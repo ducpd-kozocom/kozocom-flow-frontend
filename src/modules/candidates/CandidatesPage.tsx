@@ -63,6 +63,12 @@ const CandidateCard = memo(function CandidateCard({ candidate, colorIndex, isSco
   }
   
   const [showDetails, setShowDetails] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  
+  // Limit skills display
+  const SKILLS_LIMIT = 5;
+  const displayedSkills = showAllSkills ? skills : skills.slice(0, SKILLS_LIMIT);
+  const hasMoreSkills = skills.length > SKILLS_LIMIT;
   
   return (
     <Card className="candidate-card">
@@ -101,9 +107,23 @@ const CandidateCard = memo(function CandidateCard({ candidate, colorIndex, isSco
         </div>
         
         <div className="candidate-skills">
-          {skills.map((skill) => (
+          {displayedSkills.map((skill) => (
             <span key={skill} className="skill-tag">{skill}</span>
           ))}
+          {hasMoreSkills && (
+            <span 
+              className="skill-tag" 
+              onClick={() => setShowAllSkills(!showAllSkills)}
+              style={{ 
+                cursor: 'pointer', 
+                background: 'var(--kz-bg-tertiary)',
+                color: 'var(--kz-accent-primary)',
+                fontWeight: 500
+              }}
+            >
+              {showAllSkills ? '...less' : `+${skills.length - SKILLS_LIMIT} more`}
+            </span>
+          )}
         </div>
 
         {isScored && scoreBreakdown && (
