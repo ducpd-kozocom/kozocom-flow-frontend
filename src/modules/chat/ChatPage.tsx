@@ -80,7 +80,7 @@ export const ChatPage = memo(function ChatPage() {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "❌ Sorry, I couldn't process your request. Please check that the AI backend server is running at http://localhost:9090.",
+        content: `❌ Sorry, I couldn't process your request. Please check that the AI backend server is running at ${import.meta.env?.VITE_AI_URL ?? 'http://localhost:9000/api/v1'}.`,
         timestamp: new Date().toISOString()
       }]);
     } finally {

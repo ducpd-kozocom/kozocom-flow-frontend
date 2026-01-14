@@ -7,9 +7,9 @@
 const getApiBaseUrl = () => {
   try {
     // Try Vite environment variable first
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) {
-      console.log(import.meta.env.VITE_API_BASE_URL);
-      return import.meta.env.VITE_API_BASE_URL;
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_URL) {
+      console.log(import.meta.env.VITE_AI_URL);
+      return import.meta.env.VITE_AI_URL;
     }
   } catch {
     // Ignore if import.meta is not supported
@@ -242,8 +242,8 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return data as T;
 }
 
-// AI Service Base URL (separate from main backend)
-const AI_BASE_URL = 'http://localhost:9090/api/v1';
+// AI Service Base URL (reuse the same logic as API_BASE_URL)
+const AI_BASE_URL = getApiBaseUrl();
 
 // ─────────────────────────────────────────────────────────────
 // CV API (AI Service)

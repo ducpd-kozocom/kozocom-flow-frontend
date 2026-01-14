@@ -1,11 +1,22 @@
 // ============================================================
 // reviewer-api.ts
-// API client for Code Reviewer service (port 9000)
+// API client for Code Reviewer service (port 8000)
 // ============================================================
 
 import axios from 'axios';
 
-const REVIEWER_URL = import.meta.env?.VITE_REVIEWER_URL ?? 'http://localhost:8000/api/v1';
+const getReviewerUrl = () => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_REVIEWER_URL) {
+      return import.meta.env.VITE_REVIEWER_URL;
+    }
+  } catch {
+    // Ignore if import.meta is not supported
+  }
+  return 'http://localhost:8000/api/v1';
+};
+
+const REVIEWER_URL = getReviewerUrl();
 
 export const reviewerClient = axios.create({
   baseURL: REVIEWER_URL,

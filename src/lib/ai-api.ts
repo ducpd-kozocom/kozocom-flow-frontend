@@ -1,11 +1,22 @@
 // ============================================================
 // ai-api.ts
-// API client for AI/CV service (port 9090)
+// API client for AI/CV service (port 9000)
 // ============================================================
 
 import axios from 'axios';
 
-const AI_URL = import.meta.env?.VITE_AI_URL ?? 'http://localhost:9090/api/v1';
+const getAiUrl = () => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_URL) {
+      return import.meta.env.VITE_AI_URL;
+    }
+  } catch {
+    // Ignore if import.meta is not supported
+  }
+  return 'http://localhost:9000/api/v1';
+};
+
+const AI_URL = getAiUrl();
 
 export const aiClient = axios.create({
   baseURL: AI_URL,
